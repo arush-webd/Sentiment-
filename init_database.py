@@ -1,7 +1,4 @@
-# Make sure you're in the project root
-cd /root/sentiment-trading
-
-# Create the database initialization script
+# Fix the init_database.py file
 cat > scripts/init_database.py << 'EOF'
 import sqlite3
 import pandas as pd
@@ -126,6 +123,31 @@ def create_database():
     sample_sentiment = []
     start_date = datetime.now() - timedelta(days=30)
     
+    # Sample news templates
+    news_templates = {
+        'positive': [
+            'reported strong quarterly results with revenue growth',
+            'announces major deal worth significant value',
+            'demonstrates robust performance in key metrics',
+            'exceeds analyst expectations for the quarter',
+            'launches innovative new product line successfully'
+        ],
+        'neutral': [
+            'maintains steady performance amid market conditions',
+            'reports quarterly results in line with expectations',
+            'continues operations with standard business activities',
+            'announces routine corporate governance updates',
+            'provides standard quarterly business update'
+        ],
+        'negative': [
+            'faces challenges due to market headwinds',
+            'reports disappointing quarterly performance',
+            'stock declines on weak earnings report',
+            'encounters regulatory scrutiny over practices',
+            'experiences margin compression in key segments'
+        ]
+    }
+    
     # Create realistic sample data
     for i in range(150):  # 150 sample records
         date = (start_date + timedelta(days=i//5)).strftime('%Y-%m-%d')
@@ -142,10 +164,21 @@ def create_database():
         sentiment_score = sentiment_base + np.random.normal(0, 0.3)
         sentiment_score = np.clip(sentiment_score, -1, 1)  # Keep in range
         
+        # Choose appropriate news template
+        if sentiment_score > 0.1:
+            news_type = 'positive'
+        elif sentiment_score < -0.1:
+            news_type = 'negative'
+        else:
+            news_type = 'neutral'
+        
+        news_template = np.random.choice(news_templates[news_type])
+        company_name = company.replace('.NS', '')
+        
         sample_sentiment.append({
             'date': date,
             'company_symbol': company,
-            'news_text': f'Sample news for {company} - {["positive", "neutral", "negative"][int((sentiment_score + 1) * 1.5)]} development in business operations',
+            'news_text': f'{company_name} {news_template}',
             'sentiment_score': sentiment_score,
             'confidence_score': np.random.uniform(0.5, 0.9),
             'impact_score': np.random.uniform(0.8, 1.5),
